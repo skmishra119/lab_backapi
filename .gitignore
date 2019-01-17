@@ -4,6 +4,9 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+# Configuration file
+config/
+config/db_config.php
 
 config/
 config/db_config.php
