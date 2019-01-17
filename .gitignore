@@ -8,8 +8,6 @@ yarn-error.log*
 config/
 config/db_config.php
 
-config/
-config/db_config.php
 # Runtime data
 pids
 *.pid
