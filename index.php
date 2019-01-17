@@ -20,5 +20,6 @@ $app->get('/hello/{name}', function (Request $request, Response $response) {
 
 require_once('app/api/common_calls.php');
 require_once('app/api/users/index.php');
+require_once('app/api/doctors/index.php');
 
 $app->run();

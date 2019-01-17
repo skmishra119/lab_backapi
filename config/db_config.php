@@ -6,8 +6,8 @@
 
 class db {
 	private $dbhost = 'localhost';
-	private $dbuser = 'bintch';
-	private $dbpass = 'Bin@tech#123';
+	private $dbuser = 'root';
+	private $dbpass = '';
 	private $dbname = 'binlab_master_db';
 
 	public function connect(){
