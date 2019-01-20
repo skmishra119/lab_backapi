@@ -27,5 +27,6 @@ require_once('app/api/patients/index.php');
 require_once('app/api/categories/index.php');
 require_once('app/api/items/index.php');
 require_once('app/api/products/index.php');
+require_once('app/api/orders/index.php');
 
 $app->run();
