@@ -91,14 +91,7 @@ $app->post('/api/product/{lids}', function($request){
 	$description 	= $request->getParam('description');
 	$category_id 		= $request->getParam('category_id');
 	$status 		= $request->getParam('status');
-	// $qry 			= "insert into bl_products (name, description, category_id, status) values ( :name, :description, :category_id, :status)";
-	$qry 			= "INSERT INTO bl_products 
-								SET id = :newId, 
-								name = :name, 
-				            	description = :description, 
-				            	category_id = :category_id,  
-				            	status = :status";	
-	
+	$qry 			= "insert into bl_products (id, name, description, category_id, status) values (:newId, :name, :description, :category_id, :status)";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -133,12 +126,7 @@ $app->put('/api/product/{lids}', function($request){
 	$description 	= $request->getParam('description');
 	$category_id 		= $request->getParam('category_id');
 	$status 		= $request->getParam('status');
-	$qry 			= "UPDATE bl_products
-								SET name = :name, 
-				            		description = :description, 
-				            		category_id = :category_id,  
-				            		status = :status 
-				            	WHERE id = :cid";
+	$qry 			= "UPDATE bl_products SET name = :name, description = :description, category_id = :category_id, status = :status WHERE id = :cid";
 	
 	try{
 		$lab_db = new lab_db();
