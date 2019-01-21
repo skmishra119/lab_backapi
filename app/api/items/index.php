@@ -10,7 +10,7 @@ $app->get('/api/items/{lids}', function($request){
 	$lab_id = trim($lu_ids[0]);
 	//$uid = trim($lu_ids[1]);
 
-	$qry="select * from bl_items where status='ACTIVE'";
+	$qry="select i.id, i.name, i.description, i.unit, i.minval, i.maxval, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_items i left join bl_products p on i.product_id=p.id where i.status='ACTIVE'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -30,8 +30,8 @@ $app->get('/api/items/{lids}', function($request){
 $app->get('/api/item/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
-	$pid = trim($lu_ids[1]);
-	$qry="select * from bl_items where id='$pid' AND status='ACTIVE'";
+	$itm_id = trim($lu_ids[1]);
+	$qry="select i.id, i.name, i.description, i.unit, i.minval, i.maxval, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_items i left join bl_products p on i.product_id=p.id where i.id='".$itm_id."' and i.status='ACTIVE'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -53,7 +53,7 @@ $app->get('/api/items/product/{lids}', function($request){
 	$lab_id = trim($lu_ids[0]);
 	$product_id = trim($lu_ids[1]);
 	
-	$qry="SELECT * FROM bl_items WHERE product_id=:product_id";
+	$qry="select i.id, i.name, i.description, i.unit, i.minval, i.maxval, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_items i left join bl_products p on i.product_id=p.id where p.product_id=:product_id and i.status='ACTIVE'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -83,15 +83,13 @@ $app->post('/api/item/{lids}', function($request){
 	
 	$name 			= $request->getParam('name');
 	$description 	= $request->getParam('description');
-	$product_id 		= $request->getParam('product_id');
+	$product_id 	= $request->getParam('product_id');
+	$unit 			= $request->getParam('unit');
+	$minval			= $request->getParam('minval');
+	$maxval			= $request->getParam('maxval');
 	$status 		= $request->getParam('status');
 	// $qry 			= "insert into bl_items (name, description, product_id, status) values ( :name, :description, :product_id, :status)";
-	$qry 			= "INSERT INTO bl_items 
-								SET id = :newId, 
-								name = :name, 
-				            	description = :description, 
-				            	product_id = :product_id,  
-				            	status = :status";	
+	$qry = "INSERT INTO bl_items (id, name, product_id, unit, minval, maxval, status) values (:newId, :name, :description, :product_id, :unit, :minval, :maxval, :status)";	
 	
 	try{
 		$lab_db = new lab_db();
@@ -104,6 +102,9 @@ $app->post('/api/item/{lids}', function($request){
 		$stmt->bindParam(':name', $name, PDO::PARAM_STR);
 		$stmt->bindParam(':description', $description, PDO::PARAM_STR);
 		$stmt->bindParam(':product_id', $product_id, PDO::PARAM_STR);
+		$stmt->bindParam(':unit', $unit, PDO::PARAM_STR);
+		$stmt->bindParam(':minval', $minval, PDO::PARAM_STR);
+		$stmt->bindParam(':maxval', $maxval, PDO::PARAM_STR);
 		$stmt->bindParam(':status', $status, PDO::PARAM_STR);
 		$stmt->execute();
 
@@ -121,18 +122,16 @@ $app->put('/api/item/{lids}', function($request){
 	// $lab_id = '4d5b7f24-0b5e-11e9-89cd-0208c7f15232';
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
-	$cid = trim($lu_ids[1]);
+	$itm_id = trim($lu_ids[1]);
 
 	$name 			= $request->getParam('name');
 	$description 	= $request->getParam('description');
-	$product_id 		= $request->getParam('product_id');
+	$product_id 	= $request->getParam('product_id');
+	$unit 			= $request->getParam('unit');
+	$minval			= $request->getParam('minval');
+	$maxval			= $request->getParam('maxval');
 	$status 		= $request->getParam('status');
-	$qry 			= "UPDATE bl_items
-								SET name = :name, 
-				            		description = :description, 
-				            		product_id = :product_id,  
-				            		status = :status 
-				            	WHERE id = :cid";
+	$qry = "UPDATE bl_items	SET name = :name, description = :description, product_id = :product_id, unit = :unit, minval = :minval,  maxval = :maxval, status = :status WHERE id = :itm_id";
 	
 	try{
 		$lab_db = new lab_db();
@@ -141,11 +140,14 @@ $app->put('/api/item/{lids}', function($request){
 			throw new PDOException("Internal server error in connecting databases", 1);
 		}
 		$stmt = $lab_db->prepare($qry);
+		$stmt->bindParam(':itm_id', $itm_id, PDO::PARAM_STR);
 		$stmt->bindParam(':name', $name, PDO::PARAM_STR);
 		$stmt->bindParam(':description', $description, PDO::PARAM_STR);
 		$stmt->bindParam(':product_id', $product_id, PDO::PARAM_STR);
+		$stmt->bindParam(':unit', $unit, PDO::PARAM_STR);
+		$stmt->bindParam(':minval', $minval, PDO::PARAM_STR);
+		$stmt->bindParam(':maxval', $maxval, PDO::PARAM_STR);
 		$stmt->bindParam(':status', $status, PDO::PARAM_STR);
-		$stmt->bindParam(':cid', $cid, PDO::PARAM_STR);
 		$stmt->execute();
 
 		$data['message'] = array('type'=>'success', 'msg'=>'Update Successfully.');	
@@ -160,13 +162,11 @@ $app->put('/api/item/{lids}', function($request){
 $app->delete('/api/item/{lids}', function($request, $response, $args){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
-	$cid = trim($lu_ids[1]);
+	$itm_id = trim($lu_ids[1]);
 	// $lab_id = '4d5b7f24-0b5e-11e9-89cd-0208c7f15232';
-	$id 	= $request->getAttribute('id');
+	//$id 	= $request->getAttribute('id');
 	$status = $request->getParam('status');
-	$qry 	= "UPDATE bl_items 
-				SET status = :status 
-				WHERE id = :cid";
+	$qry 	= "UPDATE bl_items SET status = 'DELETED' WHERE id = :itm_id";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -174,8 +174,7 @@ $app->delete('/api/item/{lids}', function($request, $response, $args){
 			throw new PDOException("Internal server error in connecting databases", 1);
 		}
 		$stmt = $lab_db->prepare($qry);		
-		$stmt->bindParam(':status', $status, PDO::PARAM_STR);
-		$stmt->bindParam(':cid', $cid, PDO::PARAM_STR);
+		$stmt->bindParam(':itm_id', $itm_id, PDO::PARAM_STR);
 		$stmt->execute();
 		$data['message'] = array('type'=>'success', 'msg'=>'Deleted successfully');	
 		echo json_encode(array_reverse($data));
