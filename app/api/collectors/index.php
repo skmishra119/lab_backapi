@@ -6,11 +6,11 @@ header("Content-Type: application/json");
 
 global $lab_id;
 
-$app->get('/api/colectors/{lids}', function($request){
+$app->get('/api/collectors/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	//$uid = trim($lu_ids[1]);
-	$qry="select p.id, p.email_id, concat(p.title,' ',p.first_name,' ',p.last_name) as fullname, p.address, p.city, p.mobile, date_format(p.updated,'%b %d, %Y %H:%i:%s') as updated from bl_colectors p where p.status='ACTIVE'";
+	$qry="select p.id, p.email_id, concat(p.title,' ',p.first_name,' ',p.last_name) as fullname, p.address, p.city, p.mobile, date_format(p.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors p where p.status='ACTIVE'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -31,7 +31,7 @@ $app->get('/api/colector/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	$pat_id = trim($lu_ids[1]);
-	$qry="select p.id, p.email_id, p.title, p.first_name, p.last_name, p.address, p.city, p.mobile, p.status, date_format(p.updated,'%b %d, %Y %H:%i:%s') as updated from bl_colectors p where p.status='ACTIVE' and p.id='".$pat_id."'";
+	$qry="select p.id, p.email_id, p.title, p.first_name, p.last_name, p.address, p.city, p.mobile, p.status, date_format(p.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors p where p.status='ACTIVE' and p.id='".$pat_id."'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -73,7 +73,7 @@ $app->post('/api/colector/{lids}', function($request, $response, $args){
 	//$password = md5('Welcome@123');
 	//$role = $request->getParam('role');
 	$status = $request->getParam('status');
-	$qry="insert into bl_colectors (id, title, first_name, last_name, email_id, address, city, mobile, status) values (:newid, :title, :first_name, :last_name, :email_id, :address, :city, :mobile, :status)";
+	$qry="insert into bl_collectors (id, title, first_name, last_name, email_id, address, city, mobile, status) values (:newid, :title, :first_name, :last_name, :email_id, :address, :city, :mobile, :status)";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -116,7 +116,7 @@ $app->put('/api/colector/{lids}', function($request, $response, $args){
 	$mobile = $request->getParam('mobile');
 	$status = $request->getParam('status');
 	
-	$uQry = "update bl_colectors set title = :title, first_name = :fname, last_name = :lname, email_id = :emailid, address = :address, city = :city, mobile = :mobile, status = :status where id='".$pat_id."'";
+	$uQry = "update bl_collectors set title = :title, first_name = :fname, last_name = :lname, email_id = :emailid, address = :address, city = :city, mobile = :mobile, status = :status where id='".$pat_id."'";
 	try{
 
 		$lab_db = new lab_db();
@@ -148,7 +148,7 @@ $app->delete('/api/colector/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	$pat_id = trim($lu_ids[1]);
-	$uQry="update bl_colectors set status='DELETED' where id='".$pat_id."'";
+	$uQry="update bl_collectors set status='DELETED' where id='".$pat_id."'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
