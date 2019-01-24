@@ -30,8 +30,8 @@ $app->get('/api/collectors/{lids}', function($request){
 $app->get('/api/colector/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
-	$pat_id = trim($lu_ids[1]);
-	$qry="select p.id, p.email_id, p.title, p.first_name, p.last_name, p.address, p.city, p.mobile, p.status, date_format(p.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors p where p.status='ACTIVE' and p.id='".$pat_id."'";
+	$col_id = trim($lu_ids[1]);
+	$qry="select p.id, p.email_id, p.title, p.first_name, p.last_name, p.address, p.city, p.mobile, p.status, date_format(p.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors p where p.status='ACTIVE' and p.id='".$col_id."'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -58,7 +58,7 @@ $app->post('/api/colector/{lids}', function($request, $response, $args){
 
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
-	$pat_id = trim($lu_ids[1]);
+	$col_id = trim($lu_ids[1]);
 	
 	$IdConf = new uuid_config();
 	$newId = $IdConf->generate();
@@ -105,7 +105,7 @@ $app->post('/api/colector/{lids}', function($request, $response, $args){
 $app->put('/api/colector/{lids}', function($request, $response, $args){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
-	$pat_id = trim($lu_ids[1]);
+	$col_id = trim($lu_ids[1]);
 	//$usrid = $request->getAttribute('id');
 	$title = $request->getParam('title');
 	$fname = $request->getParam('first_name');
@@ -116,7 +116,7 @@ $app->put('/api/colector/{lids}', function($request, $response, $args){
 	$mobile = $request->getParam('mobile');
 	$status = $request->getParam('status');
 	
-	$uQry = "update bl_collectors set title = :title, first_name = :fname, last_name = :lname, email_id = :emailid, address = :address, city = :city, mobile = :mobile, status = :status where id='".$pat_id."'";
+	$uQry = "update bl_collectors set title = :title, first_name = :fname, last_name = :lname, email_id = :emailid, address = :address, city = :city, mobile = :mobile, status = :status where id='".$col_id."'";
 	try{
 
 		$lab_db = new lab_db();
@@ -147,8 +147,8 @@ $app->put('/api/colector/{lids}', function($request, $response, $args){
 $app->delete('/api/colector/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
-	$pat_id = trim($lu_ids[1]);
-	$uQry="update bl_collectors set status='DELETED' where id='".$pat_id."'";
+	$col_id = trim($lu_ids[1]);
+	$uQry="update bl_collectors set status='DELETED' where id='".$col_id."'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
