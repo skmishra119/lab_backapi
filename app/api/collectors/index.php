@@ -10,7 +10,7 @@ $app->get('/api/collectors/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	//$uid = trim($lu_ids[1]);
-	$qry="select p.id, p.email_id, concat(p.title,' ',p.first_name,' ',p.last_name) as fullname, p.address, p.city, p.mobile, date_format(p.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors p where p.status='ACTIVE'";
+	$qry="select c.id, c.email_id, concat(c.title,' ',c.first_name,' ',c.last_name) as fullname, c.address, c.city, c.mobile, date_format(c.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors c where c.status='ACTIVE'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -31,7 +31,7 @@ $app->get('/api/colector/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	$col_id = trim($lu_ids[1]);
-	$qry="select p.id, p.email_id, p.title, p.first_name, p.last_name, p.address, p.city, p.mobile, p.status, date_format(p.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors p where p.status='ACTIVE' and p.id='".$col_id."'";
+	$qry="select c.id, c.email_id, c.title, c.first_name, c.last_name, c.address, c.city, c.mobile, c.status, date_format(c.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors c where c.status='ACTIVE' and c.id='".$col_id."'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
