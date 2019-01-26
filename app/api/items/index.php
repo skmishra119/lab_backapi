@@ -10,7 +10,7 @@ $app->get('/api/items/{lids}', function($request){
 	$lab_id = trim($lu_ids[0]);
 	//$uid = trim($lu_ids[1]);
 
-	$qry="select i.id, i.name, i.description, i.unit, i.minval, i.maxval, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_items i left join bl_products p on i.product_id=p.id where i.status='ACTIVE'";
+	$qry="select i.id, i.name, i.description, i.unit, concat(i.minval,' - ',i.maxval) as vals, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_items i left join bl_products p on i.product_id=p.id where i.status='ACTIVE'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -44,7 +44,7 @@ $app->get('/api/item/{lids}', function($request){
 		if(sizeof($data['data'])>0){
 			$data['message'] = array('type'=>'success', 'msg'=>'Success');
 		} else {
-			$data['data'] = array(array('token'=>null));
+			//$data['data'] = array(array('token'=>null));
 			$data['message'] = array('type'=>'Error', 'msg'=>'No data available!');	
 		}
 		echo json_encode(array_reverse($data));
