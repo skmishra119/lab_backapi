@@ -31,7 +31,7 @@ $app->get('/api/item/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	$itm_id = trim($lu_ids[1]);
-	$qry="select i.id, i.name, i.description, i.unit, i.minval, i.maxval, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_items i left join bl_products p on i.product_id=p.id where i.id='".$itm_id."' and i.status='ACTIVE'";
+	$qry="select i.id, i.name, i.description, i.unit, i.minval, i.maxval, i.product_id, i.status, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_items i where i.id='".$itm_id."' and i.status='ACTIVE'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -39,9 +39,15 @@ $app->get('/api/item/{lids}', function($request){
 			throw new PDOException("Internal server error in connecting databases", 1);
 		}
 		$stmt = $lab_db->query($qry);
-		$data = $stmt->fetchAll(PDO::FETCH_OBJ);
+		$data['data'] = $stmt->fetchAll(PDO::FETCH_OBJ);
 		$lab_db = null;
-		echo json_encode($data);
+		if(sizeof($data['data'])>0){
+			$data['message'] = array('type'=>'success', 'msg'=>'Success');
+		} else {
+			$data['data'] = array(array('token'=>null));
+			$data['message'] = array('type'=>'Error', 'msg'=>'No data available!');	
+		}
+		echo json_encode(array_reverse($data));
 	} catch(PDOException $e){
 		echo '{"message" : {type": "Error", "msg": "'.$e->getMessage().'"}}';
 	}
@@ -89,7 +95,7 @@ $app->post('/api/item/{lids}', function($request){
 	$maxval			= $request->getParam('maxval');
 	$status 		= $request->getParam('status');
 	// $qry 			= "insert into bl_items (name, description, product_id, status) values ( :name, :description, :product_id, :status)";
-	$qry = "INSERT INTO bl_items (id, name, product_id, unit, minval, maxval, status) values (:newId, :name, :description, :product_id, :unit, :minval, :maxval, :status)";	
+	$qry = "INSERT INTO bl_items (id, name, description, product_id, unit, minval, maxval, status) values (:newId, :name, :description, :product_id, :unit, :minval, :maxval, :status)";	
 	
 	try{
 		$lab_db = new lab_db();

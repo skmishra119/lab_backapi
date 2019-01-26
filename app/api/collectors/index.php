@@ -10,7 +10,7 @@ $app->get('/api/collectors/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	//$uid = trim($lu_ids[1]);
-	$qry="select c.id, c.email_id, concat(c.title,' ',c.first_name,' ',c.last_name) as fullname, c.address, c.city, c.mobile, date_format(c.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors c where c.status='ACTIVE'";
+	$qry="select c.id, c.email_id, concat(c.title,' ',c.first_name,' ',c.last_name) as fullname, c.mobile, date_format(c.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors c where c.status='ACTIVE'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -27,11 +27,11 @@ $app->get('/api/collectors/{lids}', function($request){
 });
 
 
-$app->get('/api/colector/{lids}', function($request){
+$app->get('/api/collector/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	$col_id = trim($lu_ids[1]);
-	$qry="select c.id, c.email_id, c.title, c.first_name, c.last_name, c.address, c.city, c.mobile, c.status, date_format(c.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors c where c.status='ACTIVE' and c.id='".$col_id."'";
+	$qry="select c.id, c.email_id, c.title, c.first_name, c.last_name, c.mobile, c.status, date_format(c.updated,'%b %d, %Y %H:%i:%s') as updated from bl_collectors c where c.status='ACTIVE' and c.id='".$col_id."'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -54,7 +54,7 @@ $app->get('/api/colector/{lids}', function($request){
 });
 
 // Add cotecor
-$app->post('/api/colector/{lids}', function($request, $response, $args){
+$app->post('/api/collector/{lids}', function($request, $response, $args){
 
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
@@ -67,13 +67,11 @@ $app->post('/api/colector/{lids}', function($request, $response, $args){
 	$fname = $request->getParam('first_name');
 	$lname = $request->getParam('last_name');
 	$email = $request->getParam('email_id');
-	$addr =  $request->getParam('address');
-	$city = $request->getParam('city'); 
 	$mobile = $request->getParam('mobile');
 	//$password = md5('Welcome@123');
 	//$role = $request->getParam('role');
 	$status = $request->getParam('status');
-	$qry="insert into bl_collectors (id, title, first_name, last_name, email_id, address, city, mobile, status) values (:newid, :title, :first_name, :last_name, :email_id, :address, :city, :mobile, :status)";
+	$qry="insert into bl_collectors (id, title, first_name, last_name, email_id, mobile, status) values (:newid, :title, :first_name, :last_name, :email_id, :mobile, :status)";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -86,8 +84,6 @@ $app->post('/api/colector/{lids}', function($request, $response, $args){
 		$stmt->bindParam(':first_name', $fname, PDO::PARAM_STR);
 		$stmt->bindParam(':last_name', $lname, PDO::PARAM_STR);
 		$stmt->bindParam(':email_id', $email, PDO::PARAM_STR);
-		$stmt->bindParam(':address', $addr, PDO::PARAM_STR);
-		$stmt->bindParam(':city', $city, PDO::PARAM_STR);
 		$stmt->bindParam(':mobile', $mobile, PDO::PARAM_STR);
 		$stmt->bindParam(':status', $status, PDO::PARAM_STR);
 		$stmt->execute();
@@ -102,7 +98,7 @@ $app->post('/api/colector/{lids}', function($request, $response, $args){
 
 
 // Update cotecor
-$app->put('/api/colector/{lids}', function($request, $response, $args){
+$app->put('/api/collector/{lids}', function($request, $response, $args){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	$col_id = trim($lu_ids[1]);
@@ -111,12 +107,10 @@ $app->put('/api/colector/{lids}', function($request, $response, $args){
 	$fname = $request->getParam('first_name');
 	$lname = $request->getParam('last_name');
 	$email = $request->getParam('email_id');
-	$addr =  $request->getParam('address');
-	$city = $request->getParam('city'); 
 	$mobile = $request->getParam('mobile');
 	$status = $request->getParam('status');
 	
-	$uQry = "update bl_collectors set title = :title, first_name = :fname, last_name = :lname, email_id = :emailid, address = :address, city = :city, mobile = :mobile, status = :status where id='".$col_id."'";
+	$uQry = "update bl_collectors set title = :title, first_name = :fname, last_name = :lname, email_id = :emailid, mobile = :mobile, status = :status where id='".$col_id."'";
 	try{
 
 		$lab_db = new lab_db();
@@ -129,8 +123,6 @@ $app->put('/api/colector/{lids}', function($request, $response, $args){
 		$stmt->bindParam(':fname', $fname, PDO::PARAM_STR);
 		$stmt->bindParam(':lname', $lname, PDO::PARAM_STR);
 		$stmt->bindParam(':emailid', $email, PDO::PARAM_STR);
-		$stmt->bindParam(':address', $addr, PDO::PARAM_STR);
-		$stmt->bindParam(':city', $city, PDO::PARAM_STR);
 		$stmt->bindParam(':mobile', $mobile, PDO::PARAM_STR);
 		$stmt->bindParam(':status', $status, PDO::PARAM_STR);
 		$stmt->execute();
@@ -144,7 +136,7 @@ $app->put('/api/colector/{lids}', function($request, $response, $args){
 });
 
 // Deleted record
-$app->delete('/api/colector/{lids}', function($request){
+$app->delete('/api/collector/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	$col_id = trim($lu_ids[1]);

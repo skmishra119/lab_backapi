@@ -217,6 +217,7 @@ $app->delete('/api/user/{lids}', function($request){
 		$stmt->execute();
 		$stmt = $lab_db->prepare($rQry);
 		$stmt->execute();
+		$data['data'] = array(array('token'=>null));
 		$data['message'] = array('type'=>'success', 'msg'=>'Deleted successfully');	
 		echo json_encode(array_reverse($data));
 	} catch(PDOException $e){

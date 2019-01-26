@@ -18,11 +18,12 @@ $app->post('/api/order/{lids}', function($request){
 	$patient_id = $request->getParam('patient_id');
 	$referer_id = $request->getParam('referer_id');
 	$collector_id = $request->getParam('collector_id');
+	$order_date = $request->getParam('order_dt');
 	$barcode = $request->getParam('barcode');
 	$status = $request->getParam('status');
 	$items = !empty($request->getParam('items')) ? $request->getParam('items') : [];
 
-	$qry="insert into bl_orders (id, patient_id, referer_id, collector_id, barcode, status) values (:newid, :patient_id, :referer_id, :collector_id, :barcode,  :status)";
+	$qry="insert into bl_orders (id, order_date patient_id, referer_id, collector_id, barcode, status) values (:newid, :order_dt :patient_id, :referer_id, :collector_id, :barcode,  :status)";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -34,6 +35,7 @@ $app->post('/api/order/{lids}', function($request){
 		$stmt->bindParam(':patient_id', $patient_id, PDO::PARAM_STR);
 		$stmt->bindParam(':referer_id', $referer_id, PDO::PARAM_STR);
 		$stmt->bindParam(':collector_id', $collector_id, PDO::PARAM_STR);
+		$stmt->bindParam(':order_dt', $order_date, PDO::PARAM_STR);
 		$stmt->bindParam(':barcode', $barcode, PDO::PARAM_STR);
 		$stmt->bindParam(':status', $status, PDO::PARAM_STR);
 		$stmt->execute();
@@ -110,8 +112,7 @@ $app->get('/api/orders/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 
-	$qry = "select id, patient_id, referer_id, collector_id, barcode, status, date_format(updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_orders where status='ACTIVE'";
-	
+	$qry = "select o.id, concat(p.title,' ',p.first_name,' ',p.last_name) as patient, concat(d.title,' ',d.first_name,' ',d.last_name) as doctor, concat(c.title,' ',c.first_name,' ',c.last_name) as collector, o.barcode, o.status, date_format(o.updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_orders o left join bl_patients p on o.patient_id=p.id left join bl_doctors d on o.doctor_id=d.id left join bl_collectors c on o.collector_id=c.id where o.status='ACTIVE'";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
