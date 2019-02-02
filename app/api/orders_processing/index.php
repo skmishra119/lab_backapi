@@ -11,71 +11,11 @@ $app->post('/api/order_processing/{lids}', function($request){
 
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
-	
-	$IdConf = new uuid_config();
-	$newId = $IdConf->generate();
+	$oid = trim($lu_ids[1]);
 
-	$patient_id = $request->getParam('patient_id');
-	$referer_id = $request->getParam('referer_id');
-	$status = $request->getParam('status');
-	$items = !empty($request->getParam('items')) ? $request->getParam('items') : [];
-
-	$qry="insert into bl_orders_processing (id, patient_id, referer_id, status) values (:newid, :patient_id, :referer_id, :status)";
-	try{
-		$lab_db = new lab_db();
-		$lab_db = $lab_db->connect($lab_id);
-		if($lab_db==null) {
-			throw new PDOException("Internal server error in connecting databases", 1);
-		}
-		$stmt = $lab_db->prepare($qry);
-		$stmt->bindParam(':newid', $newId, PDO::PARAM_STR);
-		$stmt->bindParam(':patient_id', $patient_id, PDO::PARAM_STR);
-		$stmt->bindParam(':referer_id', $referer_id, PDO::PARAM_STR);
-		$stmt->bindParam(':status', $status, PDO::PARAM_STR);
-		$stmt->execute();
-
-		$order_id = $newId;
-		// Insertion into orders item table
-		foreach ($items as $item) {
-			$newId = $IdConf->generate();
-			$item_id = $item['id'];
-			$item_name = $item['item_name'];
-			$min_value = $item['min_value'];
-			$max_value = $item['max_value'];
-			$current_value = $item['current_value'];
-
-			$qry="insert into bl_order_items_processing (id, order_id, item_id, item_name, min_value, max_value, current_value) values (:newId, :order_id, :item_id, :item_name, :min_value, :max_value, :current_value)";
-
-			$lab_db = new lab_db();
-			$lab_db = $lab_db->connect($lab_id);
-			if($lab_db==null) {
-				throw new PDOException("Internal server error in connecting databases", 1);
-			}
-			$stmt = $lab_db->prepare($qry);
-			$stmt->bindParam(':newId', $newId, PDO::PARAM_STR);
-			$stmt->bindParam(':order_id', $order_id, PDO::PARAM_STR);
-			$stmt->bindParam(':item_id', $item_id, PDO::PARAM_STR);
-			$stmt->bindParam(':item_name', $item_name, PDO::PARAM_STR);
-			$stmt->bindParam(':min_value', $min_value, PDO::PARAM_STR);
-			$stmt->bindParam(':max_value', $max_value, PDO::PARAM_STR);
-			$stmt->bindParam(':current_value', $current_value, PDO::PARAM_STR);
-			$stmt->execute();
-		}
-
-		$data['data'] = array(array('token'=>null));
-		$data['message'] = array('type'=>'success', 'msg'=>'Saved Successfully.');	
-		echo json_encode(array_reverse($data));	
-	} catch(PDOException $e){
-		echo '{"message" : {type": "Error", "msg": "'.$e->getMessage().'"}}';
-	}
-});
-
-// Single order_processing by id
-$app->get('/api/order_processing/{lids}', function($request){
-	$lu_ids = explode('::',$request->getAttribute('lids'));
-	$lab_id = trim($lu_ids[0]);
-	$pid = trim($lu_ids[1]);
-	$qry = "select id, patient_id, referer_id, status, date_format(updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_orders_processing where id='$pid' AND status='ACTIVE'";
+	// Getting order details first
+	$order_info = null;
+	$qry = "select id, barcode, date_format(order_date,'%d/%m/%Y') as order_date, patient_id, doctor_id, collector_id, barcode, status, date_format(updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_orders where id='$oid' AND status='ACTIVE'";
 	
 	try{
 		$lab_db = new lab_db();
@@ -88,8 +28,8 @@ $app->get('/api/order_processing/{lids}', function($request){
 		$lab_db = null;
 		if(sizeof($data['data'])>0){
 			$order_info = (array)current($data['data']);
-			$order_info['items'] = array();
-			$qry = "select id, item_name, min_value, max_value, current_value, date_format(created,'%b %d, %Y %H:%i:%s') as created FROM bl_order_items_processing where order_id='$pid'"; // Need to join with item table to get item more info
+			$order_info['prod_ids'] = array();
+			$qry = "select id, product_id FROM bl_order_products where order_id='$oid'";
 
 			$lab_db = new lab_db();
 			$lab_db = $lab_db->connect($lab_id);
@@ -97,70 +37,97 @@ $app->get('/api/order_processing/{lids}', function($request){
 				throw new PDOException("Internal server error in connecting databases", 1);
 			}
 			$stmt = $lab_db->query($qry);
-			$order_info['items'] = $stmt->fetchAll(PDO::FETCH_OBJ);
-			$data['data'] = $order_info;
-			$data['message'] = array('type'=>'success', 'msg'=>'Success');
-		} else {
-			$data['data'] = array(array('token'=>null));
-			$data['message'] = array('type'=>'Error', 'msg'=>'No data available!');	
-		}
-		echo json_encode(array_reverse($data));
-	} catch(PDOException $e){
-		echo '{"message" : {type": "Error", "msg": "'.$e->getMessage().'"}}';
-	}
-});
+			$order_info['prod_ids'] = $stmt->fetchAll(PDO::FETCH_OBJ);
 
-// order_processing update API 
-$app->put('/api/order_processing/{lids}', function($request){
+			//Insetion bl_order_process table
+			$IdConf = new uuid_config();
+			$order_process_id = $IdConf->generate();
+			$status = 'PROCESSING';
+			$qry="insert into bl_order_process (id, order_id, status) values (:newid, :oid, :status)";
+			$lab_db = new lab_db();
+			$lab_db = $lab_db->connect($lab_id);
+			if($lab_db==null) {
+				throw new PDOException("Internal server error in connecting databases", 1);
+			}
+			$stmt = $lab_db->prepare($qry);
+			$stmt->bindParam(':newid', $order_process_id, PDO::PARAM_STR);
+			$stmt->bindParam(':oid', $oid, PDO::PARAM_STR);
+			$stmt->bindParam(':status', $status, PDO::PARAM_STR);
+			$stmt->execute();
 
-	$lu_ids = explode('::',$request->getAttribute('lids'));
-	$lab_id = trim($lu_ids[0]);
-	$oid = trim($lu_ids[1]);
-	
-	$IdConf = new uuid_config();
-	$newId = $IdConf->generate();
+			foreach ($order_info['prod_ids'] as $product) {
 
-	$patient_id = $request->getParam('patient_id');
-	$referer_id = $request->getParam('referer_id');
-	$status = $request->getParam('status');
-	$items = !empty($request->getParam('items')) ? $request->getParam('items') : [];
+				$product_id = $product->product_id;
 
-	$qry="UPDATE bl_orders_processing SET patient_id = :patient_id, referer_id = :referer_id, status = :status WHERE id = :oid";
+				// Insertion into bl_order_process_products table
+				$qry = "INSERT INTO bl_order_process_products (id, order_process_id, product_id) values (:newId, :order_process_id, :product_id)";
 
-	try{
-		$lab_db = new lab_db();
-		$lab_db = $lab_db->connect($lab_id);
-		if($lab_db==null) {
-			throw new PDOException("Internal server error in connecting databases", 1);
-		}
-		$stmt = $lab_db->prepare($qry);
-		$stmt->bindParam(':oid', $oid, PDO::PARAM_STR);
-		$stmt->bindParam(':patient_id', $patient_id, PDO::PARAM_STR);
-		$stmt->bindParam(':referer_id', $referer_id, PDO::PARAM_STR);
-		$stmt->bindParam(':status', $status, PDO::PARAM_STR);
-		$stmt->execute();
-		
-		$qry = "DELETE FROM bl_order_items_processing WHERE order_id = :oid";
-		$lab_db = new lab_db();
-		$lab_db = $lab_db->connect($lab_id);
-		if($lab_db==null) {
-			throw new PDOException("Internal server error in connecting databases", 1);
-		}
-		$stmt = $lab_db->prepare($qry);		
-		$stmt->bindParam(':oid', $oid, PDO::PARAM_STR);
-		$stmt->execute();
+				$lab_db = new lab_db();
+				$lab_db = $lab_db->connect($lab_id);
+				if($lab_db==null) {
+					throw new PDOException("Internal server error in connecting databases", 1);
+				}
 
-		$order_id = $oid;
-		// Insertion into orders item table
-		foreach ($items as $item) {
-			$newId = $IdConf->generate();
-			$item_id = $item['id'];
-			$item_name = $item['item_name'];
-			$min_value = $item['min_value'];
-			$max_value = $item['max_value'];
-			$current_value = $item['current_value'];
+				$IdConf = new uuid_config();
+				$newId = $IdConf->generate();
 
-			$qry="insert into bl_order_items_processing (id, order_id, item_id, item_name, min_value, max_value, current_value) values (:newId, :order_id, :item_id, :item_name, :min_value, :max_value, :current_value)";
+				$stmt = $lab_db->prepare($qry);
+				$stmt->bindParam(':newId', $newId, PDO::PARAM_STR);
+				$stmt->bindParam(':order_process_id', $order_process_id, PDO::PARAM_STR);
+				$stmt->bindParam(':product_id', $product_id, PDO::PARAM_STR);
+				$stmt->execute();
+				
+				// Insertion into bl_order_process_items table
+
+				$qry="select i.id, i.name, i.description, i.unit, i.minval, i.maxval, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_items i left join bl_products p on i.product_id=p.id where p.id=:product_id and i.status='ACTIVE'";
+
+				$lab_db = new lab_db();
+				$lab_db = $lab_db->connect($lab_id);
+				if($lab_db==null) {
+					throw new PDOException("Internal server error in connecting databases", 1);
+				}
+				$stmt = $lab_db->prepare($qry);
+				$stmt->bindParam(':product_id', $product_id, PDO::PARAM_STR);
+				$stmt->execute();
+				$product_items = $stmt->fetchAll(PDO::FETCH_OBJ);
+
+				foreach ($product_items as $value) {
+
+					$name 			= $value->name;
+					$description 	= $value->description;
+					$product_id 	= "";
+					$unit 			= $value->unit;
+					$minval			= $value->minval;
+					$maxval			= $value->maxval;
+					$order_process_product_id = $newId;
+					$qry = "INSERT INTO bl_order_process_items (id, order_process_product_id, name, description, product_id, unit, minval, maxval) values (:newId, :order_process_product_id, :name, :description, :product_id, :unit, :minval, :maxval)";
+
+					$lab_db = new lab_db();
+					$lab_db = $lab_db->connect($lab_id);
+					if($lab_db==null) {
+						throw new PDOException("Internal server error in connecting databases", 1);
+					}
+
+					$IdConf = new uuid_config();
+					$newId = $IdConf->generate();
+
+					$stmt = $lab_db->prepare($qry);
+					$stmt->bindParam(':newId', $newId, PDO::PARAM_STR);
+					$stmt->bindParam(':order_process_product_id', $order_process_product_id, PDO::PARAM_STR);
+					$stmt->bindParam(':name', $name, PDO::PARAM_STR);
+					$stmt->bindParam(':description', $description, PDO::PARAM_STR);
+					$stmt->bindParam(':product_id', $product_id, PDO::PARAM_STR);
+					$stmt->bindParam(':unit', $unit, PDO::PARAM_STR);
+					$stmt->bindParam(':minval', $minval, PDO::PARAM_STR);
+					$stmt->bindParam(':maxval', $maxval, PDO::PARAM_STR);
+					$stmt->execute();
+
+				}
+			}
+
+			// At last updat the order table
+			$status = "PROCESSED";
+			$qry="UPDATE bl_orders SET status = :status WHERE id = :oid";
 
 			$lab_db = new lab_db();
 			$lab_db = $lab_db->connect($lab_id);
@@ -168,22 +135,112 @@ $app->put('/api/order_processing/{lids}', function($request){
 				throw new PDOException("Internal server error in connecting databases", 1);
 			}
 			$stmt = $lab_db->prepare($qry);
-			$stmt->bindParam(':newId', $newId, PDO::PARAM_STR);
-			$stmt->bindParam(':order_id', $order_id, PDO::PARAM_STR);
-			$stmt->bindParam(':item_id', $item_id, PDO::PARAM_STR);
-			$stmt->bindParam(':item_name', $item_name, PDO::PARAM_STR);
-			$stmt->bindParam(':min_value', $min_value, PDO::PARAM_STR);
-			$stmt->bindParam(':max_value', $max_value, PDO::PARAM_STR);
-			$stmt->bindParam(':current_value', $current_value, PDO::PARAM_STR);
+			$stmt->bindParam(':oid', $oid, PDO::PARAM_STR);
+			$stmt->bindParam(':status', $status, PDO::PARAM_STR);
 			$stmt->execute();
-		}
 
-		$data['data'] = array(array('token'=>null));
-		$data['message'] = array('type'=>'success', 'msg'=>'Saved Successfully.');	
-		echo json_encode(array_reverse($data));	
+			$data['data'] = array(array('token'=>null));
+			$data['message'] = array('type'=>'success', 'msg'=>'Order Processed Successfully.');	
+			echo json_encode(array_reverse($data));	
+
+		} else {
+			// Order does not longer exist
+			echo '{"message" : {"type": "Error", "msg": "Order does not longer exist or has already been processed"}}';
+		}
 	} catch(PDOException $e){
-		echo '{"message" : {type": "Error", "msg": "'.$e->getMessage().'"}}';
+		echo '{"message" : {"type": "Error", "msg": "'.$e->getMessage().'"}}';
 	}
-	
+
 });
+
+// Single order_processing by id
+$app->get('/api/order_processing/{lids}', function($request){
+	$lu_ids = explode('::',$request->getAttribute('lids'));
+	$lab_id = trim($lu_ids[0]);
+	$oid = trim($lu_ids[1]);
+	$qry = "select id, order_id, status, date_format(updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_order_process where order_id='$oid' AND status='PROCESSING' LIMIT 1";
+	
+	try{
+		$lab_db = new lab_db();
+		$lab_db = $lab_db->connect($lab_id);
+		if($lab_db==null) {
+			throw new PDOException("Internal server error in connecting databases", 1);
+		}
+		$stmt = $lab_db->query($qry);
+		$result = $stmt->fetchAll(PDO::FETCH_OBJ);
+		$lab_db = null;
+		if(sizeof($result) > 0){
+			$order_processing_info = current($result);
+			$qry = "select bl_order_process_products.id, date_format(bl_order_process_products.updated,'%b %d, %Y %H:%i:%s') as updated, p.name FROM bl_order_process_products  left join bl_products p on bl_order_process_products.product_id=p.id  where order_process_id='$order_processing_info->id'"; // Get all processed products of this order
+
+			$lab_db = new lab_db();
+			$lab_db = $lab_db->connect($lab_id);
+			if($lab_db==null) {
+				throw new PDOException("Internal server error in connecting databases", 1);
+			}
+			$stmt = $lab_db->query($qry);
+			$order_processing_info->products = $stmt->fetchAll(PDO::FETCH_OBJ);
+			foreach ($order_processing_info->products as $key => $value) {
+				$qry="select i.id, i.name, i.description, i.unit,i.minval, i.maxval, i.currentval, concat(i.minval,' - ',i.maxval) as vals, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_order_process_items i left join bl_products p on i.product_id=p.id where i.order_process_product_id='".$value->id."' and i.status='ACTIVE'";
+				$lab_db = new lab_db();
+				$lab_db = $lab_db->connect($lab_id);
+				if($lab_db==null) {
+					throw new PDOException("Internal server error in connecting databases", 1);
+				}
+				$stmt = $lab_db->query($qry);
+				$order_processing_info->products[$key]->order_items = $stmt->fetchAll(PDO::FETCH_OBJ);
+			}
+
+			$data['data'] = $order_processing_info;
+			$data['message'] = array('type'=>'success', 'msg'=>'Order Processed Successfully.');	
+			echo json_encode(array_reverse($data));
+		}else{
+			echo '{"message" : {"type": "Error", "msg": "Order does not longer exist"}}';	
+		}
+	} catch(PDOException $e){
+		echo '{"message" : {"type": "Error", "msg": "'.$e->getMessage().'"}}';
+	}
+});
+
+
+// item add API 
+$app->put('/api/order_processing/{lids}', function($request){
+
+	$lu_ids = explode('::',$request->getAttribute('lids'));
+	$lab_id = trim($lu_ids[0]);
+	// $oid = trim($lu_ids[1]);
+
+	$data = $request->getParam('data');
+	$data = !empty($data) ? $data [0] : array();
+	try{
+
+		foreach ($data['order_items'] as $value) {
+
+			$id 	= $value['id'];
+			$currentval 	= (int)$value['currentval'];
+
+			$qry="UPDATE bl_order_process_items SET currentval = :currentval WHERE id = :id";
+
+			$lab_db = new lab_db();
+			$lab_db = $lab_db->connect($lab_id);
+			if($lab_db==null) {
+				throw new PDOException("Internal server error in connecting databases", 1);
+			}
+
+			$stmt = $lab_db->prepare($qry);
+			$stmt->bindParam(':currentval', $currentval, PDO::PARAM_STR);
+			$stmt->bindParam(':id', $id, PDO::PARAM_STR);
+			$stmt->execute();
+
+		}
+		$data['data'] = array(array('token'=>null));
+		$data['message'] = array('type'=>'success', 'msg'=>'Order Process updated Successfully.');	
+		echo json_encode(array_reverse($data));	
+
+	} catch(PDOException $e){
+		echo '{"message" : {"type": "Error", "msg": "'.$e->getMessage().'"}}';
+	}
+
+});
+
 

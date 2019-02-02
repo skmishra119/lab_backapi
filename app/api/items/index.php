@@ -29,7 +29,7 @@ $app->get('/api/items/{lids}', function($request){
 // Single item by id
 $app->get('/api/item/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
-	$lab_id = trim($lu_ids[0]);
+	$lab_id = trim($lu_ids[0]);	
 	$itm_id = trim($lu_ids[1]);
 	$qry="select i.id, i.name, i.description, i.unit, i.minval, i.maxval, i.product_id, i.status, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_items i where i.id='".$itm_id."' and i.status='ACTIVE'";
 	try{
