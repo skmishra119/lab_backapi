@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.8.0.1
+-- version 4.8.3
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 27, 2019 at 10:59 AM
--- Server version: 10.1.32-MariaDB
--- PHP Version: 7.2.5
+-- Generation Time: Feb 02, 2019 at 01:44 PM
+-- Server version: 10.1.36-MariaDB
+-- PHP Version: 7.2.11
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -126,8 +126,17 @@ CREATE TABLE `bl_items` (
 --
 
 INSERT INTO `bl_items` (`id`, `name`, `unit`, `minval`, `maxval`, `product_id`, `description`, `status`, `updated`) VALUES
+('09e8b38f-850d-466c-a6c3-e692d7d97f6c', 'New Item 1', 'mg/L', 0, 10, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'New Desc   for  test', 'ACTIVE', '2019-01-27 20:34:03'),
+('5435e6f9-35a5-4bbc-b809-a30a630a6694', 'New item 6', 'mg/L', 0, 5, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', '', 'ACTIVE', '2019-01-27 20:37:30'),
+('54e53145-b88c-4029-b587-0d04c9a1b4d7', 'New item 10', 'mg/L', 9, 12, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', '', 'ACTIVE', '2019-01-27 20:39:35'),
+('5722b908-df25-4acb-9167-62f0abe2bae7', 'New item 2', 'mg/L', 0, 200, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', '', 'ACTIVE', '2019-01-27 20:34:43'),
+('740d3e30-66a8-482a-b1c9-4d1899924aeb', 'New item 3', 'mg/L', 0, 10, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', '', 'ACTIVE', '2019-01-27 20:35:22'),
+('8ce90bef-73f9-4f60-8825-f127d4af673c', 'New item 8', 'mg/L', 50, 100, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', '', 'ACTIVE', '2019-01-27 20:38:58'),
+('9b564b61-21c3-43ce-b1e7-e909121952b3', 'New item 4', 'mg/L', 1, 5, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', '', 'ACTIVE', '2019-01-27 20:36:14'),
 ('a6fc9f11-1da0-11e9-a61c-fcf8aee943ea', 'RBC Count', 'g/ml', 50, 100, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'Red Blood Cells  count', 'ACTIVE', '2019-01-21 22:49:04'),
-('c6fceb2f-c4f8-4f48-a335-11fe27d4b277', 'New  item', 'mg/L', 50, 500, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'New Desc   for  test', 'ACTIVE', '2019-01-24 23:26:02');
+('c6fceb2f-c4f8-4f48-a335-11fe27d4b277', 'New  item', 'mg/L', 50, 500, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'New Desc   for  test', 'ACTIVE', '2019-01-24 23:26:02'),
+('e178e7d2-8a8f-4aba-b368-55c4b86b10ea', 'New item 7', 'mg/L', 0, 6, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', '', 'ACTIVE', '2019-01-27 20:38:16'),
+('e7531800-5382-4d01-894c-7bea2d0f6bb4', 'New item 5', 'mg/L', 0, 3, '08876ae9-088b-4cd9-ad55-50bf1b410b2d', '', 'ACTIVE', '2019-01-27 20:36:55');
 
 -- --------------------------------------------------------
 
@@ -151,7 +160,9 @@ CREATE TABLE `bl_orders` (
 --
 
 INSERT INTO `bl_orders` (`id`, `patient_id`, `doctor_id`, `collector_id`, `order_date`, `barcode`, `status`, `updated`) VALUES
-('013a6b96-abe4-4640-b5e1-e5f4ce77c6a5', '12795d10-107d-4e75-a9db-da212b606a2f', '58ca9f62-61e8-45cf-baae-ee3a92925add', 'cc5ddc16-eb83-4d9f-bf25-25a068f9d581', '0000-00-00 00:00:00', '121122345', 'ACTIVE', '2019-01-26 23:44:30');
+('013a6b96-abe4-4640-b5e1-e5f4ce77c6a5', '12795d10-107d-4e75-a9db-da212b606a2f', '58ca9f62-61e8-45cf-baae-ee3a92925add', 'cc5ddc16-eb83-4d9f-bf25-25a068f9d581', '2019-01-23 00:00:00', '121122345', 'ACTIVE', '2019-01-26 23:44:30'),
+('631c1980-cf85-497f-9332-a570f88ddb58', '229d2f33-814c-4ff3-aef6-f98e1d932fa3', 'XXX', 'XXX', '2019-01-24 00:00:00', '34567890', 'ACTIVE', '2019-01-27 19:17:46'),
+('f850e1c0-eb7e-450a-ab98-96364aed40ad', '229d2f33-814c-4ff3-aef6-f98e1d932fa3', '58ca9f62-61e8-45cf-baae-ee3a92925add', 'XXX', '2019-01-25 00:00:00', '22456789', 'ACTIVE', '2019-01-27 19:15:49');
 
 -- --------------------------------------------------------
 
@@ -161,14 +172,73 @@ INSERT INTO `bl_orders` (`id`, `patient_id`, `doctor_id`, `collector_id`, `order
 
 CREATE TABLE `bl_order_process` (
   `id` varchar(36) NOT NULL,
-  `patient_id` varchar(36) NOT NULL,
-  `doctor_id` varchar(36) DEFAULT NULL,
-  `collector_id` varchar(36) DEFAULT NULL,
-  `order_date` datetime NOT NULL,
-  `barcode` varchar(20) DEFAULT NULL,
+  `order_id` varchar(36) NOT NULL,
   `status` char(20) NOT NULL DEFAULT 'ACTIVE',
   `updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `bl_order_process`
+--
+
+INSERT INTO `bl_order_process` (`id`, `order_id`, `status`, `updated`) VALUES
+('8ba38992-8420-4372-9c99-89317e316980', 'f850e1c0-eb7e-450a-ab98-96364aed40ad', 'PROCESSING', '2019-02-02 15:30:03');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bl_order_process_items`
+--
+
+CREATE TABLE `bl_order_process_items` (
+  `id` varchar(36) NOT NULL,
+  `order_process_product_id` varchar(36) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `unit` char(10) NOT NULL,
+  `minval` float NOT NULL,
+  `maxval` float NOT NULL,
+  `product_id` varchar(36) NOT NULL,
+  `description` varchar(250) DEFAULT NULL,
+  `currentval` float NOT NULL,
+  `status` char(20) NOT NULL DEFAULT 'ACTIVE',
+  `updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `bl_order_process_items`
+--
+
+INSERT INTO `bl_order_process_items` (`id`, `order_process_product_id`, `name`, `unit`, `minval`, `maxval`, `product_id`, `description`, `currentval`, `status`, `updated`) VALUES
+('01d66501-73ed-4ca0-bc11-412fce681655', 'f5320e36-79cf-4976-be81-1ca55af00562', 'New Item 1', 'mg/L', 0, 10, '', 'New Desc   for  test', 11, 'ACTIVE', '2019-02-02 15:30:03'),
+('192429f4-6734-4d19-bc6f-ced5d6ac6a50', 'f5320e36-79cf-4976-be81-1ca55af00562', 'New item 2', 'mg/L', 0, 200, '', '', 22, 'ACTIVE', '2019-02-02 15:39:47'),
+('1ec05955-e419-461a-96e9-7d8d4ef43283', 'f5320e36-79cf-4976-be81-1ca55af00562', 'RBC Count', 'g/ml', 50, 100, '', 'Red Blood Cells  count', 33, 'ACTIVE', '2019-02-02 15:39:47'),
+('20ec5b67-85bf-43a6-8313-4adff58aa5d1', 'f5320e36-79cf-4976-be81-1ca55af00562', 'New item 2', 'mg/L', 0, 200, '', '', 44, 'ACTIVE', '2019-02-02 15:34:08'),
+('2413dae2-f476-4f2e-9b4f-8f76c764f939', 'f5320e36-79cf-4976-be81-1ca55af00562', 'New item 8', 'mg/L', 50, 100, '', '', 55, 'ACTIVE', '2019-02-02 15:39:47');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `bl_order_process_products`
+--
+
+CREATE TABLE `bl_order_process_products` (
+  `id` varchar(36) NOT NULL,
+  `order_process_id` varchar(36) NOT NULL,
+  `product_id` varchar(36) NOT NULL,
+  `status` char(20) NOT NULL DEFAULT 'ACTIVE',
+  `updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `bl_order_process_products`
+--
+
+INSERT INTO `bl_order_process_products` (`id`, `order_process_id`, `product_id`, `status`, `updated`) VALUES
+('893e11d4-3df3-4ce3-a03e-69458c658c6f', '3354c684-4c62-4c80-97e4-c4462207b9b4', '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'ACTIVE', '2019-02-02 15:34:07'),
+('af84eec0-ca72-48c2-8f0c-a6dc36d745b3', '788dc724-c595-479f-984f-02d1fc720972', '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'ACTIVE', '2019-02-02 15:39:46'),
+('bb329058-ae3d-42cd-b85f-8c932dbdd8db', '58458860-d388-423c-89fe-0688ff1c10fa', '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'ACTIVE', '2019-02-02 15:36:57'),
+('ce5c08e7-1e2f-44e1-9966-978f6b66beea', '77d0b1d2-b4bb-40de-b722-a29a0c7b4bc8', '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'ACTIVE', '2019-02-02 15:31:35'),
+('f5320e36-79cf-4976-be81-1ca55af00562', '8ba38992-8420-4372-9c99-89317e316980', '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'ACTIVE', '2019-02-02 15:30:03');
 
 -- --------------------------------------------------------
 
@@ -183,6 +253,15 @@ CREATE TABLE `bl_order_products` (
   `status` char(20) NOT NULL DEFAULT 'ACTIVE',
   `updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `bl_order_products`
+--
+
+INSERT INTO `bl_order_products` (`id`, `order_id`, `product_id`, `status`, `updated`) VALUES
+('4f368f7a-dda2-4026-875e-11c360c323dc', '013a6b96-abe4-4640-b5e1-e5f4ce77c6a5', '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'ACTIVE', '2019-01-27 19:13:35'),
+('722ec84f-8418-41bb-8cf9-ba3e7dc78c2a', '631c1980-cf85-497f-9332-a570f88ddb58', '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'ACTIVE', '2019-01-27 19:17:46'),
+('b2b062a1-70fd-4826-becc-d53f95c6b476', 'f850e1c0-eb7e-450a-ab98-96364aed40ad', '08876ae9-088b-4cd9-ad55-50bf1b410b2d', 'ACTIVE', '2019-01-27 19:15:49');
 
 -- --------------------------------------------------------
 
@@ -369,6 +448,18 @@ ALTER TABLE `bl_orders`
 -- Indexes for table `bl_order_process`
 --
 ALTER TABLE `bl_order_process`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `bl_order_process_items`
+--
+ALTER TABLE `bl_order_process_items`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `bl_order_process_products`
+--
+ALTER TABLE `bl_order_process_products`
   ADD PRIMARY KEY (`id`);
 
 --
