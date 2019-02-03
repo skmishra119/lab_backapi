@@ -113,7 +113,7 @@ $app->get('/api/orders/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 
-	$qry = "select o.id, date_format(o.order_date,'%b %d, %Y') as order_date, concat(p.title,' ',p.first_name,' ',p.last_name) as patient, concat(d.title,' ',d.first_name,' ',d.last_name) as doctor, concat(c.title,' ',c.first_name,' ',c.last_name) as collector, o.barcode, o.status, date_format(o.updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_orders o left join bl_patients p on o.patient_id=p.id left join bl_doctors d on o.doctor_id=d.id left join bl_collectors c on o.collector_id=c.id where o.status='ACTIVE' order by o.order_date desc";
+	$qry = "select o.id, date_format(o.order_date,'%b %d, %Y') as order_date, concat(p.title,' ',p.first_name,' ',p.last_name) as patient, concat(d.title,' ',d.first_name,' ',d.last_name) as doctor, concat(c.title,' ',c.first_name,' ',c.last_name) as collector, o.barcode, o.status, date_format(o.updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_orders o left join bl_patients p on o.patient_id=p.id left join bl_doctors d on o.doctor_id=d.id left join bl_collectors c on o.collector_id=c.id where o.status!='DELETED' order by o.order_date desc";
 	try{
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);

@@ -69,10 +69,10 @@ $app->post('/api/order_processing/{lids}', function($request){
 				}
 
 				$IdConf = new uuid_config();
-				$newId = $IdConf->generate();
+				$processProductId = $IdConf->generate();
 
 				$stmt = $lab_db->prepare($qry);
-				$stmt->bindParam(':newId', $newId, PDO::PARAM_STR);
+				$stmt->bindParam(':newId', $processProductId, PDO::PARAM_STR);
 				$stmt->bindParam(':order_process_id', $order_process_id, PDO::PARAM_STR);
 				$stmt->bindParam(':product_id', $product_id, PDO::PARAM_STR);
 				$stmt->execute();
@@ -95,11 +95,9 @@ $app->post('/api/order_processing/{lids}', function($request){
 
 					$name 			= $value->name;
 					$description 	= $value->description;
-					$product_id 	= "";
 					$unit 			= $value->unit;
 					$minval			= $value->minval;
 					$maxval			= $value->maxval;
-					$order_process_product_id = $newId;
 					$qry = "INSERT INTO bl_order_process_items (id, order_process_product_id, name, description, product_id, unit, minval, maxval) values (:newId, :order_process_product_id, :name, :description, :product_id, :unit, :minval, :maxval)";
 
 					$lab_db = new lab_db();
@@ -113,7 +111,7 @@ $app->post('/api/order_processing/{lids}', function($request){
 
 					$stmt = $lab_db->prepare($qry);
 					$stmt->bindParam(':newId', $newId, PDO::PARAM_STR);
-					$stmt->bindParam(':order_process_product_id', $order_process_product_id, PDO::PARAM_STR);
+					$stmt->bindParam(':order_process_product_id', $processProductId, PDO::PARAM_STR);
 					$stmt->bindParam(':name', $name, PDO::PARAM_STR);
 					$stmt->bindParam(':description', $description, PDO::PARAM_STR);
 					$stmt->bindParam(':product_id', $product_id, PDO::PARAM_STR);
@@ -126,7 +124,7 @@ $app->post('/api/order_processing/{lids}', function($request){
 			}
 
 			// At last updat the order table
-			$status = "PROCESSED";
+			$status = "PROCESSING";
 			$qry="UPDATE bl_orders SET status = :status WHERE id = :oid";
 
 			$lab_db = new lab_db();
@@ -158,7 +156,10 @@ $app->get('/api/order_processing/{lids}', function($request){
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
 	$oid = trim($lu_ids[1]);
-	$qry = "select id, order_id, status, date_format(updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_order_process where order_id='$oid' AND status='PROCESSING' LIMIT 1";
+	$qry = "select op.id, o.id as order_id, date_format(o.order_date,'%b %d, %Y') as order_date, concat(p.title,' ',p.first_name,' ',p.last_name) as patient, concat(d.title,' ',d.first_name,' ',d.last_name) as doctor, concat(c.title,' ',c.first_name,' ',c.last_name) as collector, o.barcode, op.status, date_format(o.updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_order_process op left join bl_orders o on op.order_id=o.id left join bl_patients p on o.patient_id=p.id left join bl_doctors d on o.doctor_id=d.id left join bl_collectors c on o.collector_id=c.id where op.status='PROCESSING' and o.id='$oid' LIMIT 1";
+
+
+	//$qry = "select id, order_id, status, date_format(updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_order_process where order_id='$oid' AND status='PROCESSING' LIMIT 1";
 	
 	try{
 		$lab_db = new lab_db();
@@ -171,8 +172,8 @@ $app->get('/api/order_processing/{lids}', function($request){
 		$lab_db = null;
 		if(sizeof($result) > 0){
 			$order_processing_info = current($result);
-			$qry = "select bl_order_process_products.id, date_format(bl_order_process_products.updated,'%b %d, %Y %H:%i:%s') as updated, p.name FROM bl_order_process_products  left join bl_products p on bl_order_process_products.product_id=p.id  where order_process_id='$order_processing_info->id'"; // Get all processed products of this order
-
+			$qry = "select bl_order_process_products.id, date_format(bl_order_process_products.updated,'%b %d, %Y %H:%i:%s') as updated, p.id as product_id, p.name FROM bl_order_process_products  left join bl_products p on bl_order_process_products.product_id=p.id  where order_process_id='$order_processing_info->id'"; // Get all processed products of this order
+			//echo $qry;
 			$lab_db = new lab_db();
 			$lab_db = $lab_db->connect($lab_id);
 			if($lab_db==null) {
@@ -181,7 +182,8 @@ $app->get('/api/order_processing/{lids}', function($request){
 			$stmt = $lab_db->query($qry);
 			$order_processing_info->products = $stmt->fetchAll(PDO::FETCH_OBJ);
 			foreach ($order_processing_info->products as $key => $value) {
-				$qry="select i.id, i.name, i.description, i.unit,i.minval, i.maxval, i.currentval, concat(i.minval,' - ',i.maxval) as vals, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_order_process_items i left join bl_products p on i.product_id=p.id where i.order_process_product_id='".$value->id."' and i.status='ACTIVE'";
+				$qry="select i.id, i.name, i.description, i.unit,i.minval, i.maxval, i.currentval, concat(i.minval,' - ',i.maxval) as vals, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_order_process_items i left join bl_products p on i.product_id=p.id where i.product_id='".$value->product_id."' and i.order_process_product_id='".$value->id."' and i.status='ACTIVE'";
+				//echo $qry;
 				$lab_db = new lab_db();
 				$lab_db = $lab_db->connect($lab_id);
 				if($lab_db==null) {
@@ -208,7 +210,7 @@ $app->put('/api/order_processing/{lids}', function($request){
 
 	$lu_ids = explode('::',$request->getAttribute('lids'));
 	$lab_id = trim($lu_ids[0]);
-	// $oid = trim($lu_ids[1]);
+	$ordId = trim($lu_ids[1]);
 
 	$data = $request->getParam('data');
 	$data = !empty($data) ? $data [0] : array();
@@ -233,6 +235,13 @@ $app->put('/api/order_processing/{lids}', function($request){
 			$stmt->execute();
 
 		}
+		$opQry = "UPDATE bl_order_process set status = 'PROCESSED' where order_id = '.$ordId.'";
+		$stmt = $lab_db->prepare($opQry);
+		$stmt->execute();		
+		$oQry = "UPDATE bl_orders set status = 'PROCESSED' where order_id = '.$ordId.'";
+		$stmt = $lab_db->prepare($oQry);
+		$stmt->execute();
+			
 		$data['data'] = array(array('token'=>null));
 		$data['message'] = array('type'=>'success', 'msg'=>'Order Process updated Successfully.');	
 		echo json_encode(array_reverse($data));	
