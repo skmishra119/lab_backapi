@@ -31,4 +31,6 @@ require_once('app/api/orders/index.php');
 require_once('app/api/orders_processing/index.php');
 require_once('app/api/collectors/index.php');
 
+require_once('app/api/dashboard/index.php');
+
 $app->run();
