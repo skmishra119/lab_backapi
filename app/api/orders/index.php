@@ -245,5 +245,4 @@ $app->delete('/api/order/{lids}', function($request, $response, $args){
 	} catch(PDOException $e){
 		echo '{"message" : {type": "Error", "msg": "'.$e->getMessage().'"}}';
 	}
-});	
-
+});

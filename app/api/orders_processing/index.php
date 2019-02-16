@@ -308,4 +308,101 @@ $app->put('/api/order_processing/{lids}', function($request){
 	}
 });
 
+$app->put('/api/order_esign/{lids}', function($request){
+	$lu_ids = explode('::',$request->getAttribute('lids'));
+	$lab_id = trim($lu_ids[0]);
+	$ordId = trim($lu_ids[1]);
+
+	try {
+		$data = $request->getParam('data');
+	
+		$status = $data['status'];
+		$observation = $data['observation'];
+		$doctor_name = $data['doctor_name'];
+		$doctor_esign = 'data:image/png;base64,'.$data['doctor_esign'];
+		$sign_date = date('Y-m-d h:i:s');
+		//var_dump(json_encode($data)); die;
+
+		$lab_db = new lab_db();
+		$lab_db = $lab_db->connect($lab_id);
+
+		$opQry = "UPDATE bl_order_process set status = :status where order_id = :ord_id";
+		
+		$stmt = $lab_db->prepare($opQry);
+		$stmt->bindParam(':status', $status, PDO::PARAM_STR);
+		$stmt->bindParam(':ord_id', $ordId, PDO::PARAM_STR);
+		$stmt->execute();
+
+		$oQry = "UPDATE bl_orders set observation= :observation, doctor_esign= :doctor_esign, doctor_name = :doctor_name, sign_date= :sign_dt, status = :ord_status where id = :order_id";
+		$stmt = $lab_db->prepare($oQry);
+		$stmt->bindParam(':observation', $observation, PDO::PARAM_STR);
+		$stmt->bindParam(':doctor_esign', $doctor_esign, PDO::PARAM_STR);
+		$stmt->bindParam(':doctor_name', $doctor_name, PDO::PARAM_STR);
+		$stmt->bindParam(':sign_dt', $sign_date, PDO::PARAM_STR);
+		$stmt->bindParam(':ord_status', $status, PDO::PARAM_STR);
+		$stmt->bindParam(':order_id', $ordId, PDO::PARAM_STR);
+		$stmt->execute();
+
+		/*******CREATING PDF DOCUMENT********/
+
+		if($status == 'SIGNED'){
+			$html='<body>';
+			$lab_db = null;
+			$qry = "select op.id, o.id as order_id, date_format(o.order_date,'%b %d, %Y') as order_date, concat(p.title,' ',p.first_name,' ',p.last_name) as patient, p.address as paddr, p.city as pcity, p.mobile as pmobile, p.email_id as pemail_id, concat(d.title,' ',d.first_name,' ',d.last_name) as doctor, d.address as daddr, d.city as dcity, d.mobile as dmobile, d.email_id as demail_id, concat(c.title,' ',c.first_name,' ',c.last_name) as collector, o.barcode,  o.observation, o.doctor_name, o.doctor_esign, op.status, date_format(o.updated,'%b %d, %Y %H:%i:%s') as updated FROM bl_order_process op left join bl_orders o on op.order_id=o.id left join bl_patients p on o.patient_id=p.id left join bl_doctors d on o.doctor_id=d.id left join bl_collectors c on o.collector_id=c.id where op.status='SIGNED' and o.id='$ordId' LIMIT 1";
+			$lab_db = new lab_db();
+			$lab_db = $lab_db->connect($lab_id);
+			if($lab_db==null) {
+				throw new PDOException("Internal server error in connecting databases", 1);
+			}
+			$stmt = $lab_db->query($qry);
+			$result = $stmt->fetchAll(PDO::FETCH_OBJ);
+			$lab_db = null;
+			if(sizeof($result) > 0){
+				$ordInfo = current($result);
+				$html = '<table style="width:100%;"><tr><td><span class="order">Order#: '.$ordId.'<span></td><td valign="right" class="dat">Date: '.$ordInfo->order_date.'</td></tr><tr><td>Name: '.$ordInfo->patient.'<div class="tip">Address: '.$ordInfo->paddr.' '.$ordInfo->pcity.'<br/>'.$ordInfo->pmobile.'</div></td><td>Ref. By: '.$ordInfo->doctor.'<div class="tip">Address: '.$ordInfo->daddr.' '.$ordInfo->dcity.'<br/>'.$ordInfo->dmobile.'</div></td></tr></table>';
+
+				$qry = "select bl_order_process_products.id, date_format(bl_order_process_products.updated,'%b %d, %Y %H:%i:%s') as updated, p.id as product_id, p.name FROM bl_order_process_products  left join bl_products p on bl_order_process_products.product_id=p.id  where order_process_id='$ordInfo->id'"; // Get all processed products of this order
+				//echo $qry;
+				$lab_db = new lab_db();
+				$lab_db = $lab_db->connect($lab_id);
+				if($lab_db==null) {
+					throw new PDOException("Internal server error in connecting databases", 1);
+				}
+				$stmt = $lab_db->query($qry);
+				$ordInfo->products = $stmt->fetchAll(PDO::FETCH_OBJ);
+				foreach ($ordInfo->products as $key => $value) {
+					$html .= '<div><h3>'.$value->name.'</h3></div><table style="width:100%;"><tr class="tab_hdr"><td class="tab_hdr">Sr. #</td><td class="tab_hdr">Test Details</td><td class="tab_hdr">Adult range</td><td class="tab_hdr cval">Your\'s</td></tr>';
+					$qry="select i.id, i.name, i.description, i.unit,i.minval, i.maxval, i.currentval, concat(i.minval,' - ',i.maxval) as vals, p.name as product, date_format(i.updated,'%b %d, %Y %H:%i:%s') as updated from bl_order_process_items i left join bl_products p on i.product_id=p.id where i.product_id='".$value->product_id."' and i.order_process_product_id='".$value->id."' and i.status='ACTIVE'";
+					//echo $qry;
+					$lab_db = new lab_db();
+					$lab_db = $lab_db->connect($lab_id);
+					if($lab_db==null) {
+						throw new PDOException("Internal server error in connecting databases", 1);
+					}
+					$stmt = $lab_db->query($qry);
+					$ordInfo->products[$key]->order_items = $stmt->fetchAll(PDO::FETCH_OBJ);
+					$x = 0;
+					foreach ($ordInfo->products[$key]->order_items as $ky => $val) {
+						$x = $x + 1;
+						$html .= ($val->currentval < $val->minval || $val->currentval > $val->maxval) ? '<tr class="mis"><td class="mis">'.$x.'.</td><td class="mis">'.$val->name.'</td><td class="mis">'.$val->vals.' '.$val->unit.'</td><td class="mis cval">'.$val->currentval.' '.$val->unit.'</td></tr>' : '<tr><td>'.$x.'.</td><td>'.$val->name.'</td><td>'.$val->vals.' '.$val->unit.'</td><td class="cval">'.$val->currentval.' '.$val->unit.'</td></tr>';
+					}
+					$html .= '</table>';
+				}
+				$html .= '<div class="observe">'.$ordInfo->observation.'</div><div class"foot_dr"><div class="sdiv"><h4 class="sdiv">'.$ordInfo->doctor_name.'<br/><img class="sig" src="'.$ordInfo->doctor_esign.'" /></h4><div></div>';	
+			}
+			$html .= '</body>';
+			$pdf = new pdfDocs();
+			$pdf->createOrderPDF($ordId,$html);
+		}
+		/********END CREATING PDF DOCUMENT************/
+	
+		$data['data'] = array(array('token'=>null));
+		$data['message'] = array('type'=>'success', 'msg'=>'Order Signed Successfully.');	
+		echo json_encode(array_reverse($data));	
+
+	} catch(PDOException $e){
+		echo '{"message" : {"type": "Error", "msg": "'.$e->getMessage().'"}}';
+	}
+});
+
 
