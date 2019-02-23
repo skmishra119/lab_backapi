@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit95d01d0bb99e3c0fd7e4f0f27c498dae
+class ComposerStaticInit83105e34c127375c3a12c12c14d264ce
 {
     public static $files = array (
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
@@ -86,7 +86,6 @@ class ComposerStaticInit95d01d0bb99e3c0fd7e4f0f27c498dae
     );
 
     public static $classMap = array (
-        'FPDF' => __DIR__ . '/..' . '/setasign/fpdf/fpdf.php',
         'FPDF_TPL' => __DIR__ . '/..' . '/setasign/fpdi/fpdf_tpl.php',
         'FPDI' => __DIR__ . '/..' . '/setasign/fpdi/fpdi.php',
         'FilterASCII85' => __DIR__ . '/..' . '/setasign/fpdi/filters/FilterASCII85.php',
@@ -99,10 +98,10 @@ class ComposerStaticInit95d01d0bb99e3c0fd7e4f0f27c498dae
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit95d01d0bb99e3c0fd7e4f0f27c498dae::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit95d01d0bb99e3c0fd7e4f0f27c498dae::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit95d01d0bb99e3c0fd7e4f0f27c498dae::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInit95d01d0bb99e3c0fd7e4f0f27c498dae::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit83105e34c127375c3a12c12c14d264ce::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit83105e34c127375c3a12c12c14d264ce::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit83105e34c127375c3a12c12c14d264ce::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit83105e34c127375c3a12c12c14d264ce::$classMap;
 
         }, null, ClassLoader::class);
     }
