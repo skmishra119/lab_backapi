@@ -6,6 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'FPDF' => $vendorDir . '/setasign/fpdf/fpdf.php',
     'FPDF_TPL' => $vendorDir . '/setasign/fpdi/fpdf_tpl.php',
     'FPDI' => $vendorDir . '/setasign/fpdi/fpdi.php',
     'FilterASCII85' => $vendorDir . '/setasign/fpdi/filters/FilterASCII85.php',
