@@ -391,8 +391,8 @@ $app->put('/api/order_esign/{lids}', function($request){
 				$html .= '<div class="observe">'.$ordInfo->observation.'</div><div class"foot_dr"><div class="sdiv"><h4 class="sdiv">'.$ordInfo->doctor_name.'<br/><img class="sig" src="'.$ordInfo->doctor_esign.'" /></h4><div></div>';	
 			}
 			$html .= '</body>';
-			$pdf = new pdfDocs();
-			$pdf->createOrderPDF($ordId,$html);
+			//$pdf = new pdfDocs();
+			// $pdf->createOrderPDF($ordId,$html);
 		}
 		/********END CREATING PDF DOCUMENT************/
 	
