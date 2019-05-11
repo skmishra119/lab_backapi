@@ -34,4 +34,5 @@ require_once('app/api/collectors/index.php');
 require_once('app/api/dashboard/index.php');
 require_once('app/api/reports/index.php');
 
+
 $app->run();

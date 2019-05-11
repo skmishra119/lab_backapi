@@ -52,8 +52,8 @@ $app->get('/api/reports/{lids}', function($request){
 
 	try{
 		$qry="SELECT count(*) as order_total, status FROM bl_orders
-				WHERE YEAR(order_date) = YEAR(now() - INTERVAL 1 MONTH)
-				AND MONTH(order_date) = MONTH(now() - INTERVAL 1 MONTH) group by status";
+				WHERE YEAR(order_date) = YEAR(now())
+				AND MONTH(order_date) = MONTH(now()) group by status";
 
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -61,11 +61,78 @@ $app->get('/api/reports/{lids}', function($request){
 			throw new PDOException("Internal server error in connecting databases", 1);
 		}
 		$stmt = $lab_db->query($qry);
-		$data["order_this_month"] = $stmt->fetchAll(PDO::FETCH_OBJ);
+		$result = $stmt->fetchAll(PDO::FETCH_OBJ);
+
+		$result = json_decode(json_encode($result), true);
+		$result = array_column($result, 'order_total', 'status');
+
+		$graph_data = [
+			isset($result["PROCESSED"]) ? (int) $result["PROCESSED"] : 0, 			
+			isset($result["COMPLETED"]) ? (int) $result["COMPLETED"] : 0, 			
+			isset($result["ACTIVE"]) ? (int) $result["ACTIVE"] : 0, 			
+		];
+
+		$data["order_this_month"] = [
+			'order_status' => ['PROCESSED', 'COMPLETED','ACTIVE'],
+			'graph_data' => $graph_data
+		];
+
+
+		$qry="SELECT MONTH(order_date) as month_number, count(*) as order_total, status, order_date 
+		FROM bl_orders
+		WHERE UNIX_TIMESTAMP(order_date) >= UNIX_TIMESTAMP(LAST_DAY(now()) - interval 3 month) 
+		group by MONTH(order_date), status";
+
+		$lab_db = new lab_db();
+		$lab_db = $lab_db->connect($lab_id);
+		if($lab_db==null) {
+			throw new PDOException("Internal server error in connecting databases", 1);
+		}
+		$stmt = $lab_db->query($qry);
+		$result = $stmt->fetchAll(PDO::FETCH_OBJ);
+
+		$data["order_last_three_month"] = [];
+
+		$dataFormating = [];
+		foreach ($result as $key => $value) {
+			$dataFormating[$value->status][$value->month_number] = $value->order_total;
+		}
+
+		$data["order_last_three_month"] = [
+			'months' => [date('M', strtotime('-2 month')), date('M', strtotime('-1 month')), date('M')],
+			'graph_data' => [
+				[
+					'label' => 'COMPLETED',
+					'data'	=> array_reverse(array_values([
+						(int)date('m') => isset($dataFormating['COMPLETED'][(int)date('m')]) ? (int) $dataFormating['COMPLETED'][(int)date('m')] : 0,
+						(int)date('m', strtotime('-1 month')) => isset($dataFormating['COMPLETED'][(int)date('m', strtotime('-1 month'))]) ? (int) $dataFormating['COMPLETED'][(int)date('m', strtotime('-1 month'))] : 0,
+						(int)date('m', strtotime('-2 month')) => isset($dataFormating['COMPLETED'][(int)date('m', strtotime('-2 month'))]) ? (int) $dataFormating['COMPLETED'][(int)date('m', strtotime('-2 month'))] : 0,
+					]))
+				],
+
+				[
+					'label' => 'PROCESSED',
+					'data'	=> array_reverse(array_values([
+						(int)date('m') => isset($dataFormating['PROCESSED'][(int)date('m')]) ? (int) $dataFormating['PROCESSED'][(int)date('m')] : 0,
+						(int)date('m', strtotime('-1 month')) => isset($dataFormating['PROCESSED'][(int)date('m', strtotime('-1 month'))]) ? (int) $dataFormating['PROCESSED'][(int)date('m', strtotime('-1 month'))] : 0,
+						(int)date('m', strtotime('-2 month')) => isset($dataFormating['PROCESSED'][(int)date('m', strtotime('-2 month'))]) ? (int) $dataFormating['PROCESSED'][(int)date('m', strtotime('-2 month'))] : 0,
+					]))
+				],
+
+				[
+					'label' => 'ACTIVE',
+					'data'	=> array_reverse(array_values([
+						(int)date('m') => isset($dataFormating['ACTIVE'][(int)date('m')]) ? (int) $dataFormating['ACTIVE'][(int)date('m')] : 0,
+						(int)date('m', strtotime('-1 month')) => isset($dataFormating['ACTIVE'][(int)date('m', strtotime('-1 month'))]) ? (int) $dataFormating['ACTIVE'][(int)date('m', strtotime('-1 month'))] : 0,
+						(int)date('m', strtotime('-2 month')) => isset($dataFormating['ACTIVE'][(int)date('m', strtotime('-2 month'))]) ? (int) $dataFormating['ACTIVE'][(int)date('m', strtotime('-2 month'))] : 0,
+					]))
+				]
+			]
+		];
 
 
 		$qry="SELECT count(*) as order_total, status FROM bl_orders
-				WHERE UNIX_TIMESTAMP(order_date) >= UNIX_TIMESTAMP(now()-interval 3 month) group by status";
+				WHERE UNIX_TIMESTAMP(order_date) >= UNIX_TIMESTAMP(now()-interval 7 DAY) group by status";
 
 		$lab_db = new lab_db();
 		$lab_db = $lab_db->connect($lab_id);
@@ -73,19 +140,21 @@ $app->get('/api/reports/{lids}', function($request){
 			throw new PDOException("Internal server error in connecting databases", 1);
 		}
 		$stmt = $lab_db->query($qry);
-		$data["order_last_three_month"] = $stmt->fetchAll(PDO::FETCH_OBJ);
+		$result = $stmt->fetchAll(PDO::FETCH_OBJ);
 
+		$result = json_decode(json_encode($result), true);
+		$result = array_column($result, 'order_total', 'status');
 
-		$qry="SELECT count(*) as order_total, status FROM bl_orders
-				WHERE UNIX_TIMESTAMP(order_date) >= UNIX_TIMESTAMP(now()-interval 3 month) group by status";
+		$graph_data = [
+			isset($result["PROCESSED"]) ? (int) $result["PROCESSED"] : 0, 			
+			isset($result["COMPLETED"]) ? (int) $result["COMPLETED"] : 0, 			
+			isset($result["ACTIVE"]) ? (int) $result["ACTIVE"] : 0, 			
+		];
 
-		$lab_db = new lab_db();
-		$lab_db = $lab_db->connect($lab_id);
-		if($lab_db==null) {
-			throw new PDOException("Internal server error in connecting databases", 1);
-		}
-		$stmt = $lab_db->query($qry);
-		$data["order_last_seven_month"] = $stmt->fetchAll(PDO::FETCH_OBJ);
+		$data["order_last_seven_month"] = [
+			'order_status' => ['PROCESSED', 'COMPLETED', 'ACTIVE'],
+			'graph_data' => $graph_data,
+		];
 
 
 		$qry="SELECT count(*) as order_total, status FROM bl_orders
